@@ -10,7 +10,12 @@ pub fn parse_input(input: impl AsRef<str>) -> Result<Vec<Vec<u64>>, Box<dyn Erro
         if line.is_empty() || parsed.is_empty() {
             last = parsed.len();
             parsed.push(vec![]);
-            continue;
+
+            // Check again for empty line, because
+            //we do not want to skip the very first row
+            if line.is_empty() {
+                continue;
+            }
         }
 
         parsed[last].push(line.parse()?);
