@@ -1,8 +1,8 @@
 # Part 1
-$historyLines = Get-Content -Path 'inputs\input.txt' | Select -SkipLast 1
+$historyLines = Get-Content -Path 'inputs\input.txt' | Select-Object -SkipLast 1
 $structure = @{}
 $structure.'/' = [System.Collections.Generic.List[object]]::New()
-$pwd = '/'
+$currentPwd = '/'
 foreach ($line in $historyLines) {
     $cmd,$operation,$dirLine,$fileName,$fileSize = $null
     switch -Regex ($line) {
@@ -25,52 +25,52 @@ foreach ($line in $historyLines) {
     switch -Regex ($operation) {
         $null  {break}
         '\.\.' {
-            $pwd,$null = $pwd -split '\w+/$'
+            $currentPwd,$null = $currentPwd -split '\w+/$'
             break
         }
         '/' {
-            $pwd = '/'
+            $currentPwd = '/'
             break
         }
         '\w*' {
-            $pwd = $pwd,$_,'/' -join ''
+            $currentPwd = $currentPwd,$_,'/' -join ''
         }
     }
     # ls
     if ($null -ne $fileName) {
         $fileData = [pscustomobject]@{
-            Directory = $pwd
+            Directory = $currentPwd
             FileName = $fileName
             FileSize = $fileSize
         }
-        if ($null -eq $structure["$pwd"]) {
-            $structure.$pwd = [System.Collections.Generic.List[object]]::New()
+        if ($null -eq $structure["$currentPwd"]) {
+            $structure.$currentPwd = [System.Collections.Generic.List[object]]::New()
         }
-        ($structure.$pwd).Add($fileData)
+        ($structure.$currentPwd).Add($fileData)
         # Recursively add files to get lower folder sum
-        if ($pwd -eq '/') {continue}
-        $recursepwd = $pwd
+        if ($currentPwd -eq '/') {continue}
+        $recursecurrentPwd = $currentPwd
         do {
-            $recursepwd,$null = $recursepwd -split '\w+/$'
-            if ($null -eq $structure["$recursepwd"]) {
-                $structure.$recursepwd = [System.Collections.Generic.List[object]]::New()
+            $recursecurrentPwd,$null = $recursecurrentPwd -split '\w+/$'
+            if ($null -eq $structure["$recursecurrentPwd"]) {
+                $structure.$recursecurrentPwd = [System.Collections.Generic.List[object]]::New()
             }
-            ($structure.$recursepwd).Add($fileData)
+            ($structure.$recursecurrentPwd).Add($fileData)
         }
-        until ($recursepwd -eq '/')
+        until ($recursecurrentPwd -eq '/')
     }
 }
 
 # do sums
 # Find all of the directories with a total size of at most 100000. What is the sum of the total sizes of those directories?
 $allPathSums = foreach ($key in $structure.keys) {
-    ($structure.$key | Measure -Sum -Property fileSize).Sum
+    ($structure.$key | Measure-Object -Sum -Property fileSize).Sum
 }
-($allPathSums | Where {$_ -le 100000} | Measure -Sum).Sum
+($allPathSums | Where-Object {$_ -le 100000} | Measure-Object -Sum).Sum
 
 # Part 2
 # you need unused space of at least 30000000. You need to find a directory you can delete that will free up enough space
-[int]$totalUsed = ($structure.'/'.filesize | Measure -Sum).Sum
+[int]$totalUsed = ($structure.'/'.filesize | Measure-Object -Sum).Sum
 [int]$diffNeeded = 70000000 - $totalUsed
 [int]$mustDelete = 30000000 - $diffNeeded
-$allPathSums | Where {$_ -ge $mustDelete} | Sort | Select -First 1
+$allPathSums | Where-Object {$_ -ge $mustDelete} | Sort-Object | Select-Object -First 1
